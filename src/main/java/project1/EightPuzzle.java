@@ -15,7 +15,7 @@ public class EightPuzzle {
     private int numNode = 0;
     private int step = 0;
 
-    private boolean enableH1 = true;
+    private boolean enableH1 = false;
     private boolean enableH2 = true;
     private boolean isBatchTest = false;
 
@@ -382,7 +382,7 @@ public class EightPuzzle {
             System.out.print("Number of random runs: ");
             sc = new Scanner(System.in);
             int num = Integer.valueOf(sc.nextLine());
-            if ((num >= 0) && (num < 10000))
+            if ((num >= 0) && (num <= 10000))
                 ep.runRandom(num);
             else
                 System.out.println("Invalid input");
