@@ -13,6 +13,7 @@ public class EightPuzzle {
     private final Random RAND_ = new Random();
 
     private int numNode = 0;
+    private int step = 0;
 
     private boolean enableH1 = true;
     private boolean enableH2 = true;
@@ -101,6 +102,10 @@ public class EightPuzzle {
         this.enableH2 = enableH2;
     }
 
+    public void setBatchTest(boolean isBatchTest) {
+        this.isBatchTest = isBatchTest;
+    }
+
     private int[] swap(int[] state, int pos1, int pos2) {
         int[] newState = state.clone();
         newState[pos1] = state[pos2];
@@ -111,11 +116,14 @@ public class EightPuzzle {
 
     private void printNode(Node node) {
         int[] state = node.getState_();
-        System.out.println("-----");
-//        System.out.println(state[0] + " " + state[1] + " " + state[2] + " fn=" + node.getFn_());
-//        System.out.println(state[3] + " " + state[4] + " " + state[5] + " gn=" + node.getGn_());
-        System.out.println(state[0] + " " + state[1] + " " + state[2]);
-        System.out.println(state[3] + " " + state[4] + " " + state[5]);
+        if (!isBatchTest) {
+            System.out.println("----- (" + step++ + ")");
+            System.out.println(state[0] + " " + state[1] + " " + state[2] + " fn=" + node.getFn_());
+            System.out.println(state[3] + " " + state[4] + " " + state[5] + " gn=" + node.getGn_());
+        } else {
+            System.out.println(state[0] + " " + state[1] + " " + state[2]);
+            System.out.println(state[3] + " " + state[4] + " " + state[5]);
+        }
         System.out.println(state[6] + " " + state[7] + " " + state[8]);
     }
 
@@ -245,7 +253,7 @@ public class EightPuzzle {
         Node root = new Node(fn, gn, state, zeroPos, null);
         addFrontiers(frontiers, root, null);
 
-        if (!isBatchTest)
+        if (isBatchTest)
             printNode(root);
 
         while (frontiers.size() > 0) {
@@ -295,8 +303,8 @@ public class EightPuzzle {
     }
 
     public void runRandom(int times) {
-        int[] runTimes = new int[20];
-        int[] nodeNum = new int[20];
+        int[] runTimes = new int[50];
+        int[] nodeNum = new int[50];
 
         for (int time = 0; time < times; ++time) {
             int[] state = new int[PUZZLE_LEN_];
@@ -315,35 +323,40 @@ public class EightPuzzle {
             }
 
             if (checkSolvable(state)) {
-                System.out.println("Test " + (time + 1) + ":");
+                if (isBatchTest)
+                    System.out.println("Test " + (time + 1) + ":");
                 int length = search(state);
-                if (length % 2 == 0) {
-                    int idx = length / 2;
-                    ++runTimes[idx];
-                    nodeNum[idx] += numNode;
-                }
+
+                ++runTimes[length];
+                nodeNum[length] += numNode;
+
             } else
                 --time;
         }
 
-        for (int idx = 0; idx < 13; ++idx) {
-            if (runTimes[idx] != 0)
-                System.out.println("length " + (idx * 2) + ": " + nodeNum[idx] / runTimes[idx]);
-        }
+        if (isBatchTest)
+            for (int idx = 0; idx < 50; ++idx) {
+                if (runTimes[idx] != 0)
+                    System.out.println("length " + idx + ", "
+                            + runTimes[idx] + " rounds, avg cost: " + nodeNum[idx] / runTimes[idx]);
+            }
     }
 
     public static void main(String[] args) {
         EightPuzzle ep = new EightPuzzle();
+        ep.setEnableH1(true);
+        ep.setEnableH2(true);
 
 //        ep.runRandom(10000);
 //        ep.run();
 
         String choice;
         System.out.println(">> Please select mode.");
-        System.out.print(">> (a) manual, (b) random: ");
+        System.out.print(">> (a) manual, (b) random, (c) batch: ");
         Scanner sc = new Scanner(System.in);
         choice = sc.nextLine();
         if (choice.equals("a") || choice.equals("A")) {
+            ep.setBatchTest(false);
             while (!choice.equals("x") && !choice.equals("X")) {
                 System.out.println(">> Please paste puzzle at here.");
 
@@ -354,6 +367,7 @@ public class EightPuzzle {
                 choice = sc.nextLine();
             }
         } else if (choice.equals("b") || choice.equals("B")) {
+            ep.setBatchTest(false);
             while (!choice.equals("x") && !choice.equals("X")) {
                 System.out.println(">> Test with random sample.");
 
@@ -363,7 +377,18 @@ public class EightPuzzle {
                 sc = new Scanner(System.in);
                 choice = sc.nextLine();
             }
-        } else {
+        } else if (choice.equals("c") || choice.equals("C")) {
+            ep.setBatchTest(true);
+            System.out.print("Number of random runs: ");
+            sc = new Scanner(System.in);
+            int num = Integer.valueOf(sc.nextLine());
+            if ((num >= 0) && (num < 10000))
+                ep.runRandom(num);
+            else
+                System.out.println("Invalid input");
+
+        }
+        else {
             System.out.println(">> Please enter a or b.");
         }
         System.out.println(">> Bye.");
